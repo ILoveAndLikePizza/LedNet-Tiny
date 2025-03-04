@@ -14,4 +14,7 @@
 
 ### Congratulations, the LedNet Tiny firmware has been flashed successfully!
 
+## Known issues
+- When encountering an error looking like `error: 'uart_signal_conn_t' has no member named 'module'`, try downgrading the ESP32 board to 3.0.4.
+
 Next, you can use any device to connect to the LedNet Tiny, and access its web server on `lednet-tiny.local`.
