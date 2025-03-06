@@ -20,7 +20,8 @@ String generateWebpage(byte dmx[], BuiltInLighting led) {
   sprintf(color, "%02x%02x%02x", (int) (led.r * 255), (int) (led.g * 255), (int) (led.b * 255));
 
   String output = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>LedNet Tiny</title><style>";
-  output.concat("body { margin: 0; background: #222; color: #fff; } h1 { width: 100vw; position: fixed; top: 0; text-align: center; font-size: 4em; }");
+  output.concat("body { margin: 0; background: #222; color: #fff; font-family: Balsamiq Sans, sans-serif; }");
+  output.concat("h1 { width: 100vw; position: fixed; top: 0; text-align: center; font-size: 4em; }");
   output.concat(".channel input { writing-mode: vertical-rl; direction: rtl; } #channeltbl { display: flex; gap: 5px; margin-top: 15%; }");
   output.concat(".channel { display: flex; flex-direction: column; } #fix div { width: 50%; text-align: center; }");
   output.concat("#fix { display: flex; position: fixed; width: 100vw; justify-content: space-evenly; align-items: center;}");
@@ -50,9 +51,9 @@ String generateWebpage(byte dmx[], BuiltInLighting led) {
   output.concat("document.getElementById('led').onchange = e => { const r = parseInt(e.target.value.slice(1, 3), 16) / 255;");
   output.concat("const g = parseInt(e.target.value.slice(3, 5), 16) / 255; const b = parseInt(e.target.value.slice(5, 7), 16) / 255;");
   output.concat("req('/light', new URLSearchParams({r, g, b}).toString()); };");
-  output.concat("const connect = () => { const ssid = document.getElementById('ssid');");
-  output.concat("const pw = document.getElementById('pw'); req('/connect', `ssid=${ssid}&pw=${pw}`); }");
-  output.concat("</script><h5>v");
+  output.concat("const connect = () => { const ssid = document.getElementById('ssid').value;");
+  output.concat("const pw = document.getElementById('pw').value; req('/connect', `ssid=${ssid}&pw=${pw}`);");
+  output.concat("alert(`Credentials successfully saved! Reconnect the power to apply!`); }</script><h5>v");
   output.concat(VERSION);
   output.concat(" &nbsp;-&nbsp; &copy; 2025 ngkon. Licensed as free software (GPLv3 or later).</h5></body></html>");
 
