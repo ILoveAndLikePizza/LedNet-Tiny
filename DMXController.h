@@ -17,21 +17,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <esp_dmx.h>
 
-#define DMX_OUTPUT_PIN 25
-
 class DMXController {
   private:
     unsigned long lastUpdated;
-  
+    int pin;
+
   public:
     byte data[DMX_PACKET_SIZE];
+
+    DMXController(int dmx_pin) {
+      this->pin = dmx_pin;
+    }
 
     void init() {
       dmx_config_t conf = DMX_CONFIG_DEFAULT;
       dmx_personality_t _ps[] = {};
 
       dmx_driver_install(1, &conf, _ps, 0);
-      dmx_set_pin(1, DMX_OUTPUT_PIN, -1, -1);
+      dmx_set_pin(1, this->pin, -1, -1);
     }
 
     void update() {

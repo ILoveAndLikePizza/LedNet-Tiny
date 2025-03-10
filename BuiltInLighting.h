@@ -15,12 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#define PIN_R 19
-#define PIN_G 18
-#define PIN_B 5
-
 class BuiltInLighting {
   private:
+    int pin_r;
+    int pin_g;
+    int pin_b;
+
     byte map(float x, float in_min, float in_max, float out_min, float out_max) {
       return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
@@ -30,10 +30,16 @@ class BuiltInLighting {
     float g;
     float b;
 
+    BuiltInLighting(int r_pin, int g_pin, int b_pin) {
+      this->pin_r = r_pin;
+      this->pin_g = g_pin;
+      this->pin_b = b_pin;
+    }
+
     void init() {
-      pinMode(PIN_R, OUTPUT);
-      pinMode(PIN_G, OUTPUT);
-      pinMode(PIN_B, OUTPUT);
+      pinMode(this->pin_r, OUTPUT);
+      pinMode(this->pin_g, OUTPUT);
+      pinMode(this->pin_b, OUTPUT);
     }
 
     void write(float r, float g, float b) {
@@ -42,8 +48,8 @@ class BuiltInLighting {
       this->g = g;
       this->b = b;
 
-      analogWrite(PIN_R, this->map(this->r, 0, 1, 255, 0));
-      analogWrite(PIN_G, this->map(this->g, 0, 1, 255, 0));
-      analogWrite(PIN_B, this->map(this->b, 0, 1, 255, 0));
+      analogWrite(this->pin_r, this->map(this->r, 0, 1, 255, 0));
+      analogWrite(this->pin_g, this->map(this->g, 0, 1, 255, 0));
+      analogWrite(this->pin_b, this->map(this->b, 0, 1, 255, 0));
     }
 };

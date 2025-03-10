@@ -17,6 +17,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define VERSION "1.0.0"
 
+#define PIN_AP_MODE 15
+#define PIN_DMX_OUT 25
+#define PIN_R 19
+#define PIN_G 18
+#define PIN_B 5
+
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <WebServer.h>
@@ -30,24 +36,30 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 WebServer server(80);
 Preferences pref;
 
-DMXController dmx;
-BuiltInLighting lights;
+DMXController dmx(PIN_DMX_OUT);
+BuiltInLighting led(PIN_R, PIN_G, PIN_B);
+
+String Wifi_SSID;
+String Wifi_PW;
 
 void setup() {
   Serial.begin(115200);
+  pinMode(PIN_AP_MODE, INPUT_PULLUP);
 
   dmx.init();
-  lights.init();
+  led.init();
 
   pref.begin("lighting", true);
   pref.getBytes("channels", dmx.data, sizeof(byte) * DMX_PACKET_SIZE);
-  lights.r = pref.getFloat("light-r", 0);
-  lights.g = pref.getFloat("light-g", 0);
-  lights.b = pref.getFloat("light-b", 0);
+  float originR = pref.getFloat("light-r", 0);
+  float originG = pref.getFloat("light-g", 0);
+  float originB = pref.getFloat("light-b", 0);
+  Wifi_SSID = pref.getString("wifi-ssid");
+  Wifi_PW = pref.getString("wifi-pw");
   pref.end();
 
   server.on("/", []() {
-    server.send(200, "text/html", generateWebpage(dmx.data, lights));
+    server.send(200, "text/html", generateWebpage(dmx.data, led, Wifi_SSID, Wifi_PW));
   });
   server.on("/channel", HTTP_POST, []() {
     if (!server.hasArg("c") || !server.hasArg("v")) {
@@ -63,7 +75,7 @@ void setup() {
     pref.putBytes("channels", dmx.data, sizeof(byte) * DMX_PACKET_SIZE);
     pref.end();
 
-    server.send(200, "text/plain", "Channel successfully changed!");
+    server.send(200, "text/plain", "200 - OK");
   });
   server.on("/light", HTTP_POST, []() {
     if (!server.hasArg("r") || !server.hasArg("g") || !server.hasArg("b")) {
@@ -76,13 +88,13 @@ void setup() {
     float b = constrain(server.arg("b").toFloat(), 0, 1);
 
     pref.begin("lighting", false);
-    if (lights.r != r) pref.putFloat("light-r", r);
-    if (lights.g != g) pref.putFloat("light-g", g);
-    if (lights.b != b) pref.putFloat("light-b", b);
+    if (led.r != r) pref.putFloat("light-r", r);
+    if (led.g != g) pref.putFloat("light-g", g);
+    if (led.b != b) pref.putFloat("light-b", b);
     pref.end();
 
-    lights.write(r, g, b);
-    server.send(200, "text/plain", "Light successfully updated!");
+    led.write(r, g, b);
+    server.send(200, "text/plain", "200 - OK");
   });
   server.on("/list", HTTP_GET, []() {
     String output = "[";
@@ -94,13 +106,64 @@ void setup() {
 
     server.send(200, "application/json", output);
   });
+  server.on("/connect", HTTP_POST, []() {
+    if (!server.hasArg("ssid") || !server.hasArg("pw")) {
+      server.send(400, "text/plain", "400 - Some arguments are missing!");
+      return;
+    }
+
+    pref.begin("lighting", false);
+    pref.putString("wifi-ssid", server.arg("ssid"));
+    pref.putString("wifi-pw", server.arg("pw"));
+    pref.end();
+
+    server.send(200, "text/plain", "200 - OK");
+  });
+  server.on("/connect/clear", HTTP_DELETE, []() {
+    pref.begin("lighting", false);
+    pref.remove("wifi-ssid");
+    pref.remove("wifi-pw");
+    pref.end();
+
+    server.send(200, "text/plain", "200 - OK");
+  });
+  server.on("/reset", HTTP_DELETE, []() {
+    pref.begin("lighting", false);
+    pref.clear();
+    pref.end();
+
+    server.send(200, "text/plain", "200 - OK");
+  });
   server.onNotFound([]() {
-    server.send(404, "text/plain", "404 Not Found");
+    server.send(404, "text/plain", "404 - Not Found");
   });
 
-  if (!WiFi.softAP("LedNet Tiny", AP_PASSWORD)) {
-    Serial.println("Failed to generate an access point.");
-    while (1);
+  // button NOT pressed and credentials saved?
+  if (digitalRead(PIN_AP_MODE) && Wifi_SSID && Wifi_PW) {
+    WiFi.begin(Wifi_SSID, Wifi_PW);
+
+    // blue flash to indicate connection attempt
+    while (WiFi.status() != WL_CONNECTED) {
+      led.write(0, 0, 1);
+      delay(100);
+      led.write(0, 0, 0);
+      delay(100);
+    }
+    // go green to indicate successfully established connection
+    led.write(0, 1, 0);
+  } else { // button pressed or nothing saved?
+    if (!WiFi.softAP("LedNet Tiny", AP_PASSWORD)) {
+      Serial.println("Failed to generate an access point.");
+      while (1);
+    }
+
+    // 4x magenta flash to indicate AP mode
+    for (int i=0; i<4; i++) {
+      led.write(1, 0, 1);
+      delay(500);
+      led.write(0, 0, 0);
+      delay(500);
+    }
   }
   if (!MDNS.begin("lednet-tiny")) {
     Serial.println("Failed to initiate MDNS.");
@@ -109,7 +172,10 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
 
   server.begin();
-  lights.write(lights.r, lights.g, lights.b);
+  delay(1000); // to read the LED state
+  led.write(0, 0, 0);
+  delay(500);
+  led.write(originR, originG, originB);
 }
 
 void loop() {
