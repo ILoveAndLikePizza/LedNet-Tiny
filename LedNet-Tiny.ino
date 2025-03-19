@@ -54,8 +54,8 @@ void setup() {
   float originR = pref.getFloat("light-r", 0);
   float originG = pref.getFloat("light-g", 0);
   float originB = pref.getFloat("light-b", 0);
-  Wifi_SSID = pref.getString("wifi-ssid");
-  Wifi_PW = pref.getString("wifi-pw");
+  Wifi_SSID = pref.getString("wifi-ssid", "");
+  Wifi_PW = pref.getString("wifi-pw", "");
   pref.end();
 
   server.on("/", []() {
@@ -139,7 +139,7 @@ void setup() {
   });
 
   // button NOT pressed and credentials saved?
-  if (digitalRead(PIN_AP_MODE) && Wifi_SSID && Wifi_PW) {
+  if (digitalRead(PIN_AP_MODE) && Wifi_SSID != "" && Wifi_PW != "") {
     WiFi.begin(Wifi_SSID, Wifi_PW);
 
     // blue flash to indicate connection attempt

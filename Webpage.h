@@ -48,8 +48,8 @@ String generateWebpage(byte dmx[], BuiltInLighting led, String ssid, String ssid
   output.concat(ssid_pw);
   output.concat("\"><br><input type=\"button\" value=\"Connect\" onclick=\"connect()\">");
   output.concat("<br><input type=\"button\" class=\"danger\" value=\"Reset connection\" onclick=\"unconnect()\"></div></div>");
-  output.concat("<script>const req = (path, body = '') => fetch(`${location.origin}${path}`");
-  output.concat(",{method: 'POST', body, headers: {'Content-Type': 'application/x-www-form-urlencoded'}});");
+  output.concat("<script>const req = (path, body = '', method = 'POST') => fetch(`${location.origin}${path}`");
+  output.concat(",{method, body, headers: {'Content-Type': 'application/x-www-form-urlencoded'}});");
   output.concat("const dmxs = document.querySelectorAll(`[id^='dmx-']`);");
   output.concat("for (let i=0; i<dmxs.length; i++) dmxs[i].onchange = ");
   output.concat("() => {req('/channel', `c=${i+1}&v=${dmxs[i].value}`); };");
@@ -59,7 +59,7 @@ String generateWebpage(byte dmx[], BuiltInLighting led, String ssid, String ssid
   output.concat("const connect = () => { const ssid = document.getElementById('ssid').value;");
   output.concat("const pw = document.getElementById('pw').value; req('/connect', `ssid=${ssid}&pw=${pw}`);");
   output.concat("alert(`Credentials successfully saved! Reconnect the power to apply!`); };");
-  output.concat("const unconnect = () => {req('/connect/clear'); alert(`Credentials cleared! Reconnect to start in AP mode!`); };</script><h5>v");
+  output.concat("const unconnect = () => {req('/connect/clear', '', 'DELETE'); alert(`Credentials cleared! Reconnect to start in AP mode!`); };</script><h5>v");
   output.concat(VERSION);
   output.concat(" &nbsp;-&nbsp; &copy; 2025 ngkon. Licensed as free software (GPLv3 or later).</h5></body></html>");
 
